@@ -10,7 +10,7 @@ describe("Identity Contract", function () {
     beforeEach(async function () {
         // Get the ContractFactory and Signers here.
         Identity = await ethers.getContractFactory("Identity");
-        [owner, addr1] = await ethers.getSigners();
+        [owner, addr1, accounts] = await ethers.getSigners();
         
         const HashZero = '0x' + '0'.repeat(64); // This creates a string with 64 zeros after '0x'
 
@@ -122,5 +122,35 @@ describe("Identity Contract", function () {
             });
         });
         
+        describe("Should handle multiple users simultaneously", function () {
+            it("Should handle concurrent interactions correctly", async function () {
+                // Get multiple signers to simulate different users
+                const signers = await ethers.getSigners();
+                const user1 = signers[1];
+                const user2 = signers[2];
+                const user3 = signers[3];
+            
+                // Users add identities almost simultaneously
+                const tx1 = identity.connect(user1).addIdentity("User1 Identity");
+                const tx2 = identity.connect(user2).addIdentity("User2 Identity");
+                const tx3 = identity.connect(user3).addIdentity("User3 Identity");
+            
+                // Await all transactions to be sent and mined
+                const results = await Promise.all([tx1, tx2, tx3]);
+            
+                // Retrieve identities to assert correct addition
+                const identity1 = await identity.getIdentity(user1.address);
+                const identity2 = await identity.getIdentity(user2.address);
+                const identity3 = await identity.getIdentity(user3.address);
+            
+                // Ensure all identities are stored correctly and are unique
+                expect(identity1).to.not.equal('0x' + '0'.repeat(64));
+                expect(identity2).to.not.equal('0x' + '0'.repeat(64));
+                expect(identity3).to.not.equal('0x' + '0'.repeat(64));
+                expect(identity1).to.not.equal(identity2);
+                expect(identity2).to.not.equal(identity3);
+                expect(identity1).to.not.equal(identity3);
+            });
+        });
     });
 })
