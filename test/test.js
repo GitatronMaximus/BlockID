@@ -50,7 +50,7 @@ describe("Identity Contract", function () {
             expect(ownerIdentity).to.not.equal(user1Identity, "Salts should be different for different users");
         });
     });
-
+    
         describe("Deployment", function () {
             it("Should set the right owner", async function () {
                 // Check if the contract is deployed by the owner.
