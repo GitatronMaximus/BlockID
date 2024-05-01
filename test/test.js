@@ -82,7 +82,43 @@ describe("Identity Contract", function () {
 
         describe("Edge Case Handling", function () {
             it("Should revert when adding an identity with an empty string", async function () {
-                await expect(identity.addIdentity("")).to.be.revertedWith("Identity data cannot be empty");
+                await expect(identity.addIdentity("")).to.be.revertedWith("Identity data cannot be empty"); 
+            });          
+            it("Should revert when updating ing an identity with an empty string", async function () {
+                await expect(identity.updateIdentity("")).to.be.revertedWith("Identity data cannot be empty");
+            });
+            it("Should handle adding an identity with a very long string", async function () {
+                const longString = 'a'.repeat(10000); // 10,000 characters long
+                await identity.addIdentity(longString);
+    
+                // Retrieve the hashed identity from the contract after adding
+                const storedHash = await identity.getIdentity(owner.address);
+    
+                // Expect that the stored hash is not an empty bytes32 string (indicating non-zero or non-empty)
+                expect(storedHash).to.not.equal('0x' + '0'.repeat(64), "The identity hash should not be empty.");
+            });
+           
+        });
+
+        describe("Special Characters and Binary Data Handling", function () {
+            it("Should handle identities with special characters", async function () {
+                const specialCharData = "JohnDoe@123#%&";
+                await identity.addIdentity(specialCharData);
+                const storedHash = await identity.getIdentity(owner.address);
+                expect(storedHash).to.not.equal('0x' + '0'.repeat(64), "Identity hash should not be empty.");
+            });
+    
+            it("Should handle identities with binary data", async function () {
+                // Convert binary data to a hex string
+                const binaryData = Buffer.from("binary\x00\x01\x02");
+                const hexData = ethers.hexlify(binaryData);
+            
+                // Use the hex data to add identity
+                await identity.addIdentity(hexData);
+                const storedHash = await identity.getIdentity(owner.address);
+            
+                // Check that the stored hash is not the zero value
+                expect(storedHash).to.not.equal('0x' + '0'.repeat(64), "Identity hash should not be empty.");
             });
         });
         

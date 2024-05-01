@@ -20,6 +20,7 @@ constructor() {
     // Add an identity to the mapping
     // Add identity function that accepts a string and converts to bytes32
     function addIdentity(string memory identityData) public {
+        require(bytes(identityData).length > 0, "Identity data cannot be empty");
         require(identities[msg.sender] == bytes32(0), "Identity already exists.");
         bytes32 identityHash = keccak256(abi.encodePacked(identityData, generateSalt()));
         identities[msg.sender] = keccak256(abi.encodePacked(generateSalt(), identityData));
@@ -29,6 +30,7 @@ constructor() {
 
     // Update an existing identity
     function updateIdentity(string memory identityData) public {
+        require(bytes(identityData).length > 0, "Identity data cannot be empty");
         require(identities[msg.sender] != bytes32(0), "Identity does not exist.");
         bytes32 identityHash = keccak256(abi.encodePacked(identityData, generateSalt()));
         identities[msg.sender] = keccak256(abi.encodePacked(generateSalt(), identityData));
