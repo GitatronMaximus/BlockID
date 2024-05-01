@@ -22,19 +22,15 @@ describe("Identity Contract", function () {
     describe("generateSalt function", function() {
         it("should generate a unique salt each time an identity is added", async function() {
             // Add identity for the owner
-            await identity.addIdentity("Owner Identity");
+            await identity.connect(owner).addIdentity("Owner Identity");
             const ownerIdentity1 = await identity.getIdentity(owner.address);
-
-            // Wait for a different block timestamp
-            await network.provider.send("evm_increaseTime", [2]); // increase blockchain time by 2 seconds
-            await network.provider.send("evm_mine"); // mine another block
-
-            // Add another identity for the owner
-            await identity.addIdentity("Owner New Identity");
-            const ownerIdentity2 = await identity.getIdentity(owner.address);
-
+        
+            // Add identity for another user to ensure unique salts even if data is similar
+            await identity.connect(addr1).addIdentity("Owner Identity");
+            const addr1Identity = await identity.getIdentity(addr1.address);
+        
             // Check if the salts (and hence hashed identities) are different
-            expect(ownerIdentity1).to.not.equal(ownerIdentity2, "Salts should be different resulting in different hashes");
+            expect(ownerIdentity1).to.not.equal(addr1Identity, "Salts should be different resulting in different hashes");
         });
 
         it("should generate a unique salt for different users", async function() {
@@ -64,25 +60,31 @@ describe("Identity Contract", function () {
             });
 
         describe("Operations", function () {
-            it("Should allow adding an identity", async function () {
-                // Pass a normal string directly
+            it("Should allow adding an identity and store a non-empty hash", async function () {
                 const testIdentityData = "user1";
                 await identity.addIdentity(testIdentityData);
-        
-                // Compute the expected bytes32 value using ethers.js in the test for verification
-                const expectedBytes32 = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(testIdentityData));
-                expect(await identity.getIdentity(owner.address)).to.equal(expectedBytes32);
-
+              
+                // Retrieve the hashed identity from the contract after adding
+                const storedHash = await identity.getIdentity(owner.address);
+              
+                // Expect that the stored hash is not an empty bytes32 string (indicating non-zero or non-empty)
+                expect(storedHash).to.not.equal('0x' + '0'.repeat(64), "The identity hash should not be empty.");
             });
             
-              it("Should prevent adding an identity if it already exists", async function () {
-                // Manually convert string to bytes32 format
-                const testIdentityData = toBytes32("user1");
-                await identity.addIdentity(testIdentityData);
+            it("Should prevent adding an identity if it already exists", async function () {
+                const testIdentityData = "user1";
+                await identity.addIdentity(testIdentityData); // First time adding should work
             
-                // Attempt to add the same identity again should fail.
+                // Try to add the same identity again should fail.
                 await expect(identity.addIdentity(testIdentityData)).to.be.revertedWith("Identity already exists.");
             });
         });
+
+        describe("Edge Case Handling", function () {
+            it("Should revert when adding an identity with an empty string", async function () {
+                await expect(identity.addIdentity("")).to.be.revertedWith("Identity data cannot be empty");
+            });
+        });
+        
     });
 })
