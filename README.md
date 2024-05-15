@@ -59,34 +59,6 @@ Follow the UI prompts to create, update, or retrieve an identity.
  1.   addIdentity(string memory identityData): Adds a new identity to the blockchain.
  2.   updateIdentity(string memory identityData): Updates an existing identity.
  3.   getIdentity(address user): Retrieves identity data for a specific user.
-
-## Deploy the proxy
-Use OpenZeppelin Hardhat Upgrades plugin to deploy the proxy. This plugin abstracts away the complexities of deploying proxies.
-
-    const { deployProxy } = require('@openzeppelin/hardhat-upgrades');
-
-    async function main() {
-        const Identity = await ethers.getContractFactory("IdentityUpgradeable");
-        const identity = await deployProxy(Identity, [], {initializer: 'initialize'});
-        console.log("Deployed at:", identity.address);
-    }
-
-    main();
-
-## Manage Upgrades
-When you need to upgrade, you would prepre a new version of the contract and use the 'upgradeProxy' function provided by the OpenZeppelin upgrades plugin.
-
-    const { upgradeProxy } = require('@openzeppelin/hardhat-upgrades');
-
-    async function upgrade() {
-        const newIdentity = await ethers.getContractFactory("IdentityUpgradeableV2");
-        const upgraded = await upgradeProxy(existingProxyAddress, newIdentity);
-        console.log("Upgraded:", upgraded.address);
-    }
-
-    *** Considerations:
-        Testing: Thoroughly test both the upgrade process and the contract functionality after each upgrade to ensure state consistency and that no data is lost or corrupted.
-        Storage Layout: Be careful about the storage layout; adding new variables in derived contracts should follow the order to avoid clashes and data corruption.
         
 ## Security Considerations
 All identity data is hashed before being stored on the blockchain to ensure privacy and security.
